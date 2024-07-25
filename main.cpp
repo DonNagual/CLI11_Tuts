@@ -2,36 +2,49 @@
 #include <iostream>
 
 int main(int argc, char **argv) {
-    using std::cout;
-    using std::endl;
-    CLI::App app{"Flag example program"};
 
-    /// [define]
-    bool flag_bool;
-    app.add_flag("--bool,-b", flag_bool, "This is a bool flag");
-
-    int flag_int;
-    app.add_flag("-i,--int", flag_int, "This is an int flag");
-
-    CLI::Option *flag_plain = app.add_flag("--plain,-p", "This is a plain flag");
-    /// [define]
+    /// [Intro]
+    CLI::App app {"Geet, a aommand line git lookalike that does nothing"};
+    app.require_subcommand(1);
+    /// [Intro]
     
-    /// [parser]
-    try {
-        app.parse(argc, argv);
-    }
-    catch(const CLI::ParseError &e) {
-        return app.exit(e);
-    }
-    /// [parser]
+    /// [Add]
+    auto add = app.add_subcommand("add", "Add file(s)");
 
-    /// [usage]
-    cout << "The flags program" << endl;
-    if (flag_bool)
-        cout << "Bool flag passed" << endl;
-    if (flag_int > 0)
-        cout << "Flag int: " << flag_int << endl;
-    if (*flag_plain)
-        cout << "Flag plain: " << flag_plain->count() << endl;
-    /// [usage]
+    bool add_update;
+    add->add_flag("-U,--update", add_update, "Add updated files only");
+
+    std::vector<std::string> add_files;
+    add->add_option("files", add_files, "Files to add");
+
+    add->callback([&]() {
+        std::cout << "Adding:";
+        if (add_files.empty()) {
+            if(add_update)
+                std::cout << " all updated files";
+            else
+                std::cout << " all files";
+        }
+        else {
+            for(auto file : add_files)
+                std::cout << " " << file;
+        }
+    });
+    /// [Add]
+    
+    /// [Commit]
+    auto commit = app.add_subcommand("commit", "Commit files");
+
+    std::string commit_message;
+    commit->add_option("-m,--message", commit_message, "A message")->required();
+
+    commit->callback([&]() { std::cout << "Commit message: " << commit_message; });
+    /// [Commit]
+
+    /// [Parse]
+    CLI11_PARSE(app, argc, argv);
+
+    std::cout << "\nThanks for using geet!\n" << std::endl;
+    return 0;
+    /// [Parse]
 }
